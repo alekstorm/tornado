@@ -272,7 +272,7 @@ class SimpleHTTPClientTestCase(AsyncHTTPTestCase, LogTrapTestCase):
         self.assertEqual(response.code, 599)
 
     def test_host_header(self):
-        host_re = re.compile(b("^localhost:[0-9]+$"))
+        host_re = re.compile("^localhost:[0-9]+$")
         response = self.fetch("/host_echo")
         self.assertTrue(host_re.match(response.body))
 

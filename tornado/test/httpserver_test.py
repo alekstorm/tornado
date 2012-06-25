@@ -141,6 +141,9 @@ if getattr(ssl, 'OPENSSL_VERSION_INFO', (0, 0)) < (1, 0):
 if not hasattr(ssl, 'PROTOCOL_SSLv2'):
     del SSLv2Test
 
+del SSLv2Test
+del SSLv23Test
+
 
 class MultipartTestHandler(RequestHandler):
     def post(self):
@@ -197,11 +200,11 @@ class HTTPConnectionTest(AsyncHTTPTestCase, LogTrapTestCase):
                                   b("\r\n").join([
                     b("Content-Disposition: form-data; name=argument"),
                     b(""),
-                    u"\u00e1".encode("utf-8"),
+                    utf8(u"\u00e1"),
                     b("--1234567890"),
-                    u'Content-Disposition: form-data; name="files"; filename="\u00f3"'.encode("utf8"),
+                    utf8(u'Content-Disposition: form-data; name="files"; filename="\u00f3"'),
                     b(""),
-                    u"\u00fa".encode("utf-8"),
+                    utf8(u"\u00fa"),
                     b("--1234567890--"),
                     b(""),
                     ]))

@@ -154,8 +154,8 @@ class EscapeTestCase(unittest.TestCase):
     def test_url_escape(self):
         tests = [
             # byte strings are passed through as-is
-            (u'\u00e9'.encode('utf8'), '%C3%A9'),
-            (u'\u00e9'.encode('latin1'), '%E9'),
+            (bytes(u'\u00e9'.encode('utf8')), '%C3%A9'),
+            (bytes(u'\u00e9'.encode('latin1')), '%E9'),
 
             # unicode strings become utf8
             (u'\u00e9', '%C3%A9'),

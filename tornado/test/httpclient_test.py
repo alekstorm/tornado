@@ -166,12 +166,12 @@ Transfer-Encoding: chunked
         url = self.get_url("/auth").replace("http://", "http://me:secret@")
         self.http_client.fetch(url, self.stop)
         response = self.wait()
-        self.assertEqual(b("Basic ") + base64.b64encode(b("me:secret")),
+        self.assertEqual(b("Basic ") + base64.b64encode("me:secret"),
                          response.body)
 
     def test_body_encoding(self):
         unicode_body = u"\xe9"
-        byte_body = binascii.a2b_hex(b("e9"))
+        byte_body = bytes(binascii.a2b_hex("e9"))
 
         # unicode string in body gets converted to utf8
         response = self.fetch("/echopost", method="POST", body=unicode_body,

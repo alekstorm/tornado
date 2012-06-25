@@ -236,6 +236,7 @@ class TestIOStream(AsyncHTTPTestCase, LogTrapTestCase):
             client.close()
 
     def test_large_read_until(self):
+        # FIXME sometimes raises out-of-memory error on ironpython
         # Performance test: read_until used to have a quadratic component
         # so a read_until of 4MB would take 8 seconds; now it takes 0.25
         # seconds.

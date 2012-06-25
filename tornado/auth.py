@@ -264,7 +264,7 @@ class OAuthMixin(object):
             callback(None)
             return
         self.clear_cookie("_oauth_request_token")
-        cookie_key, cookie_secret = [base64.b64decode(escape.utf8(i)) for i in request_cookie.split("|")]
+        cookie_key, cookie_secret = [base64.b64decode(str(escape.utf8(i))) for i in request_cookie.split("|")]
         if cookie_key != request_key:
             logging.info((cookie_key, request_key, request_cookie))
             logging.warning("Request token does not match cookie")
@@ -305,8 +305,8 @@ class OAuthMixin(object):
         if response.error:
             raise Exception("Could not get request token")
         request_token = _oauth_parse_response(response.body)
-        data = (base64.b64encode(request_token["key"]) + b("|") +
-                base64.b64encode(request_token["secret"]))
+        data = (base64.b64encode(str(request_token["key"])) + b("|") +
+                base64.b64encode(str(request_token["secret"])))
         self.set_cookie("_oauth_request_token", data)
         args = dict(oauth_token=request_token["key"])
         if callback_uri:

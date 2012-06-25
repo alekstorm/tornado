@@ -38,10 +38,14 @@ from tornado.util import raise_exc_info
 import contextlib
 import logging
 import os
-import signal
 import sys
 import time
 import unittest
+
+try:
+    import signal
+except:
+    signal = None
 
 _next_port = 10000
 

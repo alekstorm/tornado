@@ -87,7 +87,7 @@ def json_encode(value):
     # the javscript.  Some json libraries do this escaping by default,
     # although python's standard library does not, so we do it here.
     # http://stackoverflow.com/questions/1580647/json-why-are-forward-slashes-escaped
-    return _json_encode(recursive_unicode(value)).replace("</", "<\\/")
+    return _json_encode(recursive_utf8(value)).replace("</", "<\\/")
 
 
 def json_decode(value):
@@ -98,6 +98,8 @@ def json_decode(value):
 def squeeze(value):
     """Replace all sequences of whitespace chars with a single space."""
     return re.sub(r"[\x00-\x20]+", " ", value).strip()
+
+# TODO unittest return types for all these
 
 
 def url_escape(value):
@@ -117,11 +119,15 @@ if sys.version_info[0] < 3:
         the result is a unicode string in the specified encoding.
         """
         if encoding is None:
-            return urllib.unquote_plus(utf8(value))
+            return bytes(urllib.unquote_plus(utf8(value)))
         else:
             return unicode(urllib.unquote_plus(utf8(value)), encoding)
 
-    parse_qs_bytes = parse_qs
+    def parse_qs_bytes(*args, **kwargs):
+        arguments = parse_qs(*args, **kwargs)
+        for name, values in arguments.iteritems():
+             arguments[name] = [bytes(v) for v in values]
+        return arguments
 else:
     def url_unescape(value, encoding='utf-8'):
         """Decodes the given value from a URL.
@@ -150,7 +156,7 @@ else:
                           encoding='latin1', errors='strict')
         encoded = {}
         for k, v in result.iteritems():
-            encoded[k] = [i.encode('latin1') for i in v]
+            encoded[k] = [bytes(i.encode('latin1')) for i in v]
         return encoded
 
 
@@ -166,7 +172,7 @@ def utf8(value):
     if isinstance(value, _UTF8_TYPES):
         return value
     assert isinstance(value, unicode)
-    return value.encode("utf-8")
+    return bytes(value.encode("utf-8"))
 
 _TO_UNICODE_TYPES = (unicode, type(None))
 
@@ -211,21 +217,36 @@ def to_basestring(value):
     return value.decode("utf-8")
 
 
+def recursive_convert(obj, converter):
+    if isinstance(obj, dict):
+        return dict((recursive_convert(k, converter), recursive_convert(v, converter)) for (k, v) in obj.iteritems())
+    elif isinstance(obj, list):
+        return list(recursive_convert(i, converter) for i in obj)
+    elif isinstance(obj, tuple):
+        return tuple(recursive_convert(i, converter) for i in obj)
+    else:
+        return converter(obj)
+
+
 def recursive_unicode(obj):
     """Walks a simple data structure, converting byte strings to unicode.
 
     Supports lists, tuples, and dictionaries.
     """
-    if isinstance(obj, dict):
-        return dict((recursive_unicode(k), recursive_unicode(v)) for (k, v) in obj.iteritems())
-    elif isinstance(obj, list):
-        return list(recursive_unicode(i) for i in obj)
-    elif isinstance(obj, tuple):
-        return tuple(recursive_unicode(i) for i in obj)
-    elif isinstance(obj, bytes):
-        return to_unicode(obj)
-    else:
-        return obj
+    return recursive_convert(obj, to_unicode)
+
+
+# FIXME rename
+def recursive_utf8(obj):
+    def broken_utf8(value):
+        if isinstance(value, bytes):
+            return str(value)
+        if value is None:
+            return None
+        return value.encode("utf-8")
+
+    return recursive_convert(obj, broken_utf8)
+
 
 # I originally used the regex from
 # http://daringfireball.net/2010/07/improved_regex_for_matching_urls

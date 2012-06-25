@@ -1,6 +1,14 @@
 #!/usr/bin/env python
 
 from __future__ import absolute_import, division, with_statement
+
+import sys
+if sys.platform == 'cli':
+    # ironpython's signal module is broken under mono
+    sys.modules['signal'] = object()
+    # doctests needs this
+    sys.__displayhook__ = sys.displayhook
+
 import unittest
 
 TEST_MODULES = [

@@ -22,6 +22,7 @@ import logging
 import urllib
 import re
 
+from tornado.escape import utf8
 from tornado.util import b, ObjectDict
 
 
@@ -217,27 +218,28 @@ def parse_multipart_form_data(boundary, data, arguments, files):
     # xmpp).  I think we're also supposed to handle backslash-escapes
     # here but I'll save that until we see a client that uses them
     # in the wild.
+    data = str(data) # TODO figure out why this is necessary, check if py3-compatible
     if boundary.startswith(b('"')) and boundary.endswith(b('"')):
         boundary = boundary[1:-1]
-    final_boundary_index = data.rfind(b("--") + boundary + b("--"))
+    final_boundary_index = data.rfind("--" + boundary + "--")
     if final_boundary_index == -1:
         logging.warning("Invalid multipart/form-data: no final boundary")
         return
-    parts = data[:final_boundary_index].split(b("--") + boundary + b("\r\n"))
+    parts = data[:final_boundary_index].split("--" + boundary + "\r\n")
     for part in parts:
         if not part:
             continue
-        eoh = part.find(b("\r\n\r\n"))
+        eoh = part.find("\r\n\r\n")
         if eoh == -1:
             logging.warning("multipart/form-data missing headers")
             continue
         headers = HTTPHeaders.parse(part[:eoh].decode("utf-8"))
         disp_header = headers.get("Content-Disposition", "")
         disposition, disp_params = _parse_header(disp_header)
-        if disposition != "form-data" or not part.endswith(b("\r\n")):
+        if disposition != "form-data" or not part.endswith("\r\n"):
             logging.warning("Invalid multipart/form-data")
             continue
-        value = part[eoh + 4:-2]
+        value = bytes(part[eoh + 4:-2])
         if not disp_params.get("name"):
             logging.warning("multipart/form-data value missing name")
             continue
@@ -290,4 +292,5 @@ def _parse_header(line):
 
 def doctests():
     import doctest
+    # FIXME document removing IronLanguages/bin/v2Debug/Lib/__future__.py
     return doctest.DocTestSuite()

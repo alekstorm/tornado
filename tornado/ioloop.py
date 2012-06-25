@@ -43,7 +43,7 @@ from tornado import stack_context
 
 try:
     import signal
-except ImportError:
+except:
     signal = None
 
 from tornado.platform.auto import set_close_exec, Waker

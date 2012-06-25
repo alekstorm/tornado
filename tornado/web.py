@@ -289,7 +289,7 @@ class RequestHandler(object):
         # If \n is allowed into the header, it is possible to inject
         # additional headers or split the request. Also cap length to
         # prevent obviously erroneous values.
-        if len(value) > 4000 or re.search(b(r"[\x00-\x1f]"), value):
+        if len(value) > 4000 or re.search(r"[\x00-\x1f]", value):
             raise ValueError("Unsafe header value %r", value)
         return value
 
@@ -463,7 +463,7 @@ class RequestHandler(object):
             assert isinstance(status, int) and 300 <= status <= 399
         self.set_status(status)
         # Remove whitespace
-        url = re.sub(b(r"[\x00-\x20]+"), "", utf8(url))
+        url = re.sub(r"[\x00-\x20]+", "", utf8(url))
         self.set_header("Location", urlparse.urljoin(utf8(self.request.uri),
                                                      url))
         self.finish()
@@ -870,7 +870,7 @@ class RequestHandler(object):
         if not hasattr(self, "_xsrf_token"):
             token = self.get_cookie("_xsrf")
             if not token:
-                token = binascii.b2a_hex(uuid.uuid4().bytes)
+                token = bytes(binascii.b2a_hex(uuid.uuid4().bytes))
                 expires_days = 30 if self.current_user else None
                 self.set_cookie("_xsrf", token, expires_days=expires_days)
             self._xsrf_token = token
@@ -1738,7 +1738,7 @@ class GZipContentEncoding(OutputTransform):
 
     def transform_chunk(self, chunk, finishing):
         if self._gzipping:
-            self._gzip_file.write(chunk)
+            self._gzip_file.write(str(chunk)) # figure out
             if finishing:
                 self._gzip_file.close()
             else:
@@ -2016,7 +2016,7 @@ def _time_independent_equals(a, b):
 
 def create_signed_value(secret, name, value):
     timestamp = utf8(str(int(time.time())))
-    value = base64.b64encode(utf8(value))
+    value = bytes(base64.b64encode(str(utf8(value))))
     signature = _create_signature(secret, name, value, timestamp)
     value = b("|").join([value, timestamp, signature])
     return value
@@ -2047,7 +2047,7 @@ def decode_signed_value(secret, name, value, max_age_days=31):
     if parts[1].startswith(b("0")):
         logging.warning("Tampered cookie %r", value)
     try:
-        return base64.b64decode(parts[0])
+        return bytes(base64.b64decode(str(parts[0]))) # FIXME don't use utf8, here or anywhere
     except Exception:
         return None
 

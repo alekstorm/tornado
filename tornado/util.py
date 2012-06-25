@@ -38,7 +38,7 @@ def import_object(name):
 # and just use byte literals.
 if str is unicode:
     def b(s):
-        return s.encode('latin1')
+        return bytes(s.encode('latin1'))
     bytes_type = bytes
 else:
     def b(s):

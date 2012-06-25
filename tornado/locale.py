@@ -135,7 +135,7 @@ def load_translations(directory):
         for i, row in enumerate(csv.reader(f)):
             if not row or len(row) < 2:
                 continue
-            row = [escape.to_unicode(c).strip() for c in row]
+            row = [escape.to_unicode(bytes(c)).strip() for c in row]
             english, translation = row[:2]
             if len(row) > 2:
                 plural = row[2] or "unknown"

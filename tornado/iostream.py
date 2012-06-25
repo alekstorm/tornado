@@ -193,6 +193,7 @@ class IOStream(object):
         callback is simply overwritten with this new callback.
         """
         assert isinstance(data, bytes_type)
+        data = str(data)
         self._check_closed()
         # We use bool(_write_buffer) as a proxy for write_buffer_size>0,
         # so never put empty strings in the buffer.
@@ -218,6 +219,7 @@ class IOStream(object):
 
     def close(self):
         """Close this stream."""
+        #print self, 'close'
         if self.socket is not None:
             if any(sys.exc_info()):
                 self.error = sys.exc_info()[1]
@@ -235,6 +237,7 @@ class IOStream(object):
         self._maybe_run_close_callback()
 
     def _maybe_run_close_callback(self):
+        #print self, 'maybe_run_close_callback', self.socket is None, self._close_callback, self._pending_callbacks == 0
         if (self.socket is None and self._close_callback and
             self._pending_callbacks == 0):
             # if there are pending callbacks, don't run the close callback
@@ -256,6 +259,7 @@ class IOStream(object):
         return self.socket is None
 
     def _handle_events(self, fd, events):
+        #print 'handle_events'
         if not self.socket:
             logging.warning("Got events for closed stream %d", fd)
             return
@@ -300,6 +304,7 @@ class IOStream(object):
     def _run_callback(self, callback, *args):
         def wrapper():
             self._pending_callbacks -= 1
+            #print self, 'run', callback, self._pending_callbacks
             try:
                 callback(*args)
             except Exception:
@@ -328,6 +333,7 @@ class IOStream(object):
             # important if the callback was pre-wrapped before entry to
             # IOStream (as in HTTPConnection._header_callback), as we could
             # capture and leak the wrong context here.
+            #print self, 'add', callback
             self._pending_callbacks += 1
             self.io_loop.add_callback(wrapper)
 
@@ -402,10 +408,14 @@ class IOStream(object):
             chunk = self.socket.recv(self.read_chunk_size)
         except socket.error, e:
             if e.args[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
+                #print self, 'a'
                 return None
             else:
+                #print self, 'b'
                 raise
+        #print self, 'c'
         if not chunk:
+            #print self, 'd'
             self.close()
             return None
         return chunk
@@ -427,7 +437,7 @@ class IOStream(object):
             raise
         if chunk is None:
             return 0
-        self._read_buffer.append(chunk)
+        self._read_buffer.append(bytes(chunk))
         self._read_buffer_size += len(chunk)
         if self._read_buffer_size >= self.max_buffer_size:
             logging.error("Reached maximum read buffer size")
@@ -506,7 +516,7 @@ class IOStream(object):
             else:
                 raise
         if err != 0:
-            self.error = socket.error(err, os.strerror(err))
+            self.error = socket.error(err, os.strerror(err)) # FIXME ipy/mono never gets here on error
             # IOLoop implementations may vary: some of them return
             # an error state before the socket becomes writable, so
             # in that case a connection failure would be handled by the

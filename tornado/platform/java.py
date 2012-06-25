@@ -2,7 +2,12 @@
 
 from __future__ import absolute_import, division, with_statement
 
+import sys
 import zlib
+
+if sys.platform == 'cli':
+    import clr
+    clr.AddReference('IronPython.Zlib')
 
 from tornado.platform import interface
 
@@ -25,8 +30,8 @@ class GzipDecompressor(interface.GzipDecompressor):
             value = value[header_read:]
             self._header_read -= header_read
         if self._header_read == 0:
-            return self._decompressobj.decompress(value)
-        return ''
+            return bytes(self._decompressobj.decompress(str(value)))
+        return b''
 
     def flush(self):
-        return self._decompressobj.flush()
+        return bytes(self._decompressobj.flush())

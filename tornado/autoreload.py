@@ -72,15 +72,19 @@ import os
 import pkgutil
 import sys
 import types
-import subprocess
 
 from tornado import ioloop
 from tornado import process
 
 try:
     import signal
-except ImportError:
+except:
     signal = None
+
+try:
+    import subprocess
+except:
+    subprocess = None
 
 
 def start(io_loop=None, check_time=500):

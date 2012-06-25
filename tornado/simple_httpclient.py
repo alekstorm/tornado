@@ -272,7 +272,7 @@ class _HTTPConnection(object):
         if username is not None:
             auth = utf8(username) + b(":") + utf8(password)
             self.request.headers["Authorization"] = (b("Basic ") +
-                                                     base64.b64encode(auth))
+                                                     base64.b64encode(str(auth)))
         if self.request.user_agent:
             self.request.headers["User-Agent"] = self.request.user_agent
         if not self.request.allow_nonstandard_methods:
@@ -300,7 +300,7 @@ class _HTTPConnection(object):
         self.stream.write(b("\r\n").join(request_lines) + b("\r\n\r\n"))
         if self.request.body is not None:
             self.stream.write(self.request.body)
-        self.stream.read_until_regex(b("\r?\n\r?\n"), self._on_headers)
+        self.stream.read_until_regex("\r?\n\r?\n", self._on_headers) # TODO figure out
 
     def _release(self):
         if self.release_callback is not None:
@@ -436,7 +436,7 @@ class _HTTPConnection(object):
 
     def _on_chunk_length(self, data):
         # TODO: "chunk extensions" http://tools.ietf.org/html/rfc2616#section-3.6.1
-        length = int(data.strip(), 16)
+        length = int(str(data.strip()), 16)
         if length == 0:
             if self._decompressor is not None:
                 tail = self._decompressor.flush()

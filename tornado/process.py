@@ -28,10 +28,12 @@ from binascii import hexlify
 
 from tornado import ioloop
 
-try:
-    import multiprocessing  # Python 2.6+
-except ImportError:
-    multiprocessing = None
+multiprocessing = None
+if sys.platform != 'cli':
+    try:
+        import multiprocessing  # Python 2.6+
+    except ImportError:
+        pass
 
 
 def cpu_count():

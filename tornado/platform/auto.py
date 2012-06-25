@@ -26,11 +26,12 @@ Most code that needs access to this functionality should do e.g.::
 from __future__ import absolute_import, division, with_statement
 
 import os
+import sys
 
 if os.name == 'nt':
     from tornado.platform.common import GzipDecompressor, Waker
     from tornado.platform.windows import set_close_exec
-elif os.name == 'java':
+elif os.name == 'java' or sys.platform == 'cli':
     from tornado.platform.common import Waker
     from tornado.platform.java import GzipDecompressor, set_close_exec
 else:
